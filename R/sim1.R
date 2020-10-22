@@ -32,16 +32,16 @@ for (i in seq_len(iter)) {
   phi <- phi[sort(names(phi))]    # make sure r is in same order as phi
   
   # write output
-  res$iter[i] = i
-  res$rsq[i] = cor(r, phi) ^ 2
-  res$rank[i] = all(order(r) == order(phi))
-  res$noise[i] = noise
-  res$N[i] = N
-  res$b[i] = b
-  res$k[i] = k
-  res$pairs_avg[i] = Dx_pairs[1]
-  res$pairs_var[i] = Dx_pairs[2]
-  res$items_var[i] = Dx_items
+  res$iter[i] <- i
+  res$rsq[i] <- cor(r, phi) ^ 2
+  res$rank[i] <- all(order(r) == order(phi))
+  res$noise[i] <- noise
+  res$N[i] <- N
+  res$b[i] <- b
+  res$k[i] <- k
+  res$pairs_avg[i] <- Dx_pairs[1]
+  res$pairs_var[i] <- Dx_pairs[2]
+  res$items_var[i] <- Dx_items
   
   # progress
   if ((i %% 100) == 0L) cat(i, "\n")
