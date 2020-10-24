@@ -14,14 +14,16 @@ res <- tibble(
   b = NA,
   items = NA,
   is_bibd = NA,
-  pairs_avg = NA,
-  pairs_var = NA,
-  items_var = NA
+  dx_pairs_max = NA,
+  dx_pairs_len = NA,
+  dx_items_max = NA,
+  dx_items_len = NA
 )
 
 # do the damn thing
 set.seed(1839)
 for (i in seq_len(iter)) {
+  # draw parameters:
   items <- sample(8:20, 1)        # draw number of items
   phi <- rnorm(items)             # make true latent score
   names(phi) <- letters[1:items]  # give them names
@@ -29,6 +31,8 @@ for (i in seq_len(iter)) {
   N <- round(runif(1, 300, 2000)) # simulate the sample size
   b <- sample(8:20, 1)            # draw number of blocks in design
   k <- 4                          # constant number of items per block
+  
+  # make and get information on design:
   Dx <- make_design(items, b, k)  # generate a design from these parameters
   is_bibd <- Dx %>%               # see if its bibd
     mutate_all(                   #   for details, see the while loop
@@ -40,8 +44,18 @@ for (i in seq_len(iter)) {
     getElement(1) %>% 
     `[`(1:4) %>% 
     all()
-  Dx_pairs <- get_pairwise(Dx)    # get pairwise info on design
-  Dx_items <- get_itemvar(Dx)     # get variance of number of times appeared
+  
+  # get pairwise info on design:
+  Dx_pairs_tab <- prop.table(table(table(c(apply(Dx, 1, get_pairwise0)))))
+  Dx_pairs_max <- max(Dx_pairs_tab)
+  Dx_pairs_len <- length(Dx_pairs_tab)
+  
+  # and item appearance info on design
+  Dx_items_tab <- prop.table(table(table(unlist(Dx))))
+  Dx_items_max <- max(Dx_items_tab)
+  Dx_items_len <- length(Dx_items_tab)
+  
+  # scoring how well it performed:
   r <- sim_abw(N, Dx, phi, noise) # generate result from these parameters
   r <- r[sort(names(phi))]        # make sure r is in same order as phi
   phi <- phi[sort(names(phi))]    # make sure r is in same order as phi
@@ -61,9 +75,10 @@ for (i in seq_len(iter)) {
   res$b[i] <- b
   res$items[i] <- items
   res$is_bibd[i] <- is_bibd
-  res$pairs_avg[i] <- Dx_pairs[[1]]
-  res$pairs_var[i] <- Dx_pairs[[2]]
-  res$items_var[i] <- Dx_items
+  res$dx_pairs_max[i] <- Dx_pairs_max
+  res$dx_pairs_len[i] <- Dx_pairs_len
+  res$dx_items_max[i] <- Dx_items_max
+  res$dx_items_len[i] <- Dx_items_len
   
   # progress
   if ((i %% 100) == 0L) cat(i, "\n")
