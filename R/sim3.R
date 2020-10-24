@@ -13,7 +13,10 @@ res <- tibble(
   N = NA,
   b = NA,
   items = NA,
-  is_bibd = NA
+  is_bibd = NA,
+  pairs_avg = NA,
+  pairs_var = NA,
+  items_var = NA
 )
 
 # do the damn thing
@@ -58,6 +61,9 @@ for (i in seq_len(iter)) {
   res$b[i] <- b
   res$items[i] <- items
   res$is_bibd[i] <- is_bibd
+  res$pairs_avg[i] <- Dx_pairs[[1]]
+  res$pairs_var[i] <- Dx_pairs[[2]]
+  res$items_var[i] <- Dx_items
   
   # progress
   if ((i %% 100) == 0L) cat(i, "\n")
