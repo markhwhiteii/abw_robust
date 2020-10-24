@@ -55,6 +55,9 @@ dat %>%
   unique() %>% 
   nrow()
 
+# cor mat
+round(cor(dat), 2)[2:6, 7:14]
+
 # bibd vs non bibd -------------------------------------------------------------
 m0 <- betareg(rsq ~ is_bibd | is_bibd, dat)
 summary(m0)
@@ -132,6 +135,51 @@ emmeans(m1, ~ b + items) %>%
   ) +
   facet_wrap(~ items, scales = "free")
 
+# guidance for when you can't get all pairs
+dat %>% 
+  filter(pairs_avg < 1 & !is_bibd) %>% 
+  betareg(rsq ~ pairs_avg + items_var | pairs_avg + items_var, .) %>% 
+  summary()
+
+dat %>% 
+  filter(pairs_avg < 1 & !is_bibd) %>% 
+  ggplot(aes(x = pairs_avg, y = rsq)) +
+  geom_point(shape = 1, alpha = .2) +
+  geom_smooth(se = FALSE, method = "betareg", color = "black") +
+  theme_minimal()
+
+dat %>% 
+  filter(pairs_avg < 1 & !is_bibd) %>% 
+  ggplot(aes(x = items_var, y = rsq)) +
+  geom_point(shape = 1, alpha = .2) +
+  geom_smooth(se = FALSE, method = "betareg", color = "black") +
+  theme_minimal()
+
+# what about when you can put all pairs in
+dat %>% 
+  filter(pairs_avg == 1) %>% 
+  betareg(rsq ~ pairs_var | pairs_var, .) %>% 
+  summary()
+
+dat %>% 
+  filter(pairs_avg == 1) %>% 
+  ggplot(aes(x = pairs_var, y = rsq)) +
+  geom_point(shape = 1, alpha = .2) +
+  geom_smooth(se = FALSE, method = "betareg", color = "black") +
+  theme_minimal()
+
+dat %>% 
+  filter(pairs_avg == 1 & !is_bibd) %>% 
+  betareg(rsq ~ pairs_var | pairs_var, .) %>% 
+  summary()
+
+dat %>% 
+  filter(pairs_avg == 1 & !is_bibd) %>% 
+  ggplot(aes(x = pairs_var, y = rsq)) +
+  geom_point(shape = 1, alpha = .2) +
+  geom_smooth(se = FALSE, method = "betareg", color = "black") +
+  theme_minimal()
+
 # rank all ---------------------------------------------------------------------
 dat %>% 
   mutate(b = factor(b), items = factor(items), is_bibd) %>% 
@@ -208,6 +256,26 @@ dat %>%
   geom_point(size = 3, shape = 1)
 
 # rank avg ---------------------------------------------------------------------
+dat %>% 
+  mutate(b = factor(b), items = factor(items), is_bibd) %>% 
+  group_by(b, items, is_bibd) %>% 
+  summarise(retain_rank = mean(rank_avg), .groups = "drop") %>% 
+  ggplot(aes(x = b, y = retain_rank, group = items)) +
+  geom_line() +
+  labs(
+    y = "Average Proportion of Items with Rank Order Retained", 
+    x = "# of Blocks"
+  ) +
+  scale_color_discrete(name = "# of Items in Total Set") +
+  theme_minimal() +
+  theme(legend.position = "top", text = element_text(size = 18)) +
+  facet_wrap(~ items, scales = "free") +
+  geom_point(aes(shape = is_bibd), size = 3) +
+  scale_shape_manual(
+    name = "Is BIBD?", 
+    labels = c("False", "True"),
+    values = c(1, 19)
+  )
 
 # rank top ---------------------------------------------------------------------
 
