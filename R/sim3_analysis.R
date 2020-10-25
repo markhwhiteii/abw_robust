@@ -263,7 +263,7 @@ dat %>%
 # rank avg ---------------------------------------------------------------------
 dat %>% 
   mutate(b = factor(b), items = factor(items), is_bibd) %>% 
-  group_by(b, items, is_bibd) %>% 
+  group_by(b, items, is_bibd, lambda, reps) %>% 
   summarise(retain_rank = mean(rank_avg), .groups = "drop") %>% 
   ggplot(aes(x = b, y = retain_rank, group = items)) +
   geom_line() +
@@ -280,7 +280,9 @@ dat %>%
     name = "Is BIBD?", 
     labels = c("False", "True"),
     values = c(1, 19)
-  )
+  ) +
+  geom_text(aes(label = round(lambda, 1)), vjust = 2) +
+  geom_text(aes(label = round(reps, 1)), vjust = 3)
 
 # misc -------------------------------------------------------------------------
 # annotate the b by items points with lambda and reps
