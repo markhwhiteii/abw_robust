@@ -3,7 +3,12 @@ library(betareg)
 library(emmeans)
 library(tidyverse)
 
-dat <- read_csv("../Data/results3.csv")
+dat <- read_csv("../Data/results3.csv") %>% 
+  mutate(
+    reps = (4 * b) / items,
+    lambda = reps * (4 - 1) / (items - 1)
+  ) %>% 
+  select(-pairs_avg, -pairs_var, -items_var)
 
 # efa --------------------------------------------------------------------------
 # 12 failures of rsq
@@ -56,7 +61,7 @@ dat %>%
   nrow()
 
 # cor mat
-round(cor(dat), 2)[2:6, 7:14]
+round(cor(dat), 2)
 
 # bibd vs non bibd -------------------------------------------------------------
 m0 <- betareg(rsq ~ is_bibd | is_bibd, dat)
@@ -277,7 +282,28 @@ dat %>%
     values = c(1, 19)
   )
 
-# rank top ---------------------------------------------------------------------
+# misc -------------------------------------------------------------------------
+# annotate the b by items points with lambda and reps
+ggplot(dat[!dat$is_bibd, ], aes(x = lambda, y = rank_avg)) +
+  geom_point() +
+  geom_smooth(se = FALSE)
 
-# rank bot ---------------------------------------------------------------------
+ggplot(dat[!dat$is_bibd, ], aes(x = reps, y = rank_avg)) +
+  geom_point() +
+  geom_smooth(se = FALSE)
 
+ggplot(dat[!dat$is_bibd, ], aes(x = lambda, y = rsq)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = "betareg")
+
+ggplot(dat[!dat$is_bibd, ], aes(x = reps, y = rsq)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = "betareg")
+
+ggplot(dat[!dat$is_bibd, ], aes(x = abs(round(lambda) - lambda), y = rsq)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = "betareg")
+
+ggplot(dat[!dat$is_bibd, ], aes(x = abs(round(reps) - reps), y = rsq)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = "betareg")
