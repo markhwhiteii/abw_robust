@@ -1,7 +1,7 @@
 source("funs.R")
 
 # initialize output
-iter <- 100
+iter <- 10000
 res <- tibble(
   iter = rep(NA, iter),
   rsq = NA,
