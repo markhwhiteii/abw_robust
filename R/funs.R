@@ -37,6 +37,19 @@ sim_abw <- function(N, d, x, eps_sd) {
   return(out)
 }
 
+# run it for an entire sample, return abw coefs
+# allow for a list of designs
+ldx_sim_abw <- function(N, d, x, eps_sd) {
+  dat <- N %>% 
+    seq_len() %>% 
+    map_dfr(~get_oneperson(d[[sample(seq_along(d), 1)]], x, eps_sd)) %>% 
+    group_by(item) %>% 
+    summarise(t = sum(t), b = sum(b), w = sum(w), .groups = "drop")
+  out <- ae_mnl(dat, "t", "b", "w")$b
+  names(out) <- dat$item
+  return(out)
+}
+
 # function for making designs
 make_design <- function(...) {
   out <- find.BIB(...) %>% 
