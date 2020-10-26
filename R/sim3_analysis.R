@@ -6,7 +6,9 @@ library(tidyverse)
 dat <- read_csv("../Data/results3.csv") %>% 
   mutate(
     reps = (4 * b) / items,
-    lambda = reps * (4 - 1) / (items - 1)
+    lambda = reps * (4 - 1) / (items - 1),
+    reps_int = abs(round(reps) - reps),
+    lambda_int = abs(round(lambda) - lambda)
   ) %>% 
   select(-pairs_avg, -pairs_var, -items_var)
 
@@ -106,104 +108,26 @@ key <- dat %>%
 emmeans(m1, ~ b + items) %>% 
   as_tibble() %>% 
   left_join(key) %>% 
-  ggplot(aes(x = b, y = emmean, group = items, color = items)) +
-  geom_line() +
-  labs(y = expression(R^2~Between~ABW~Estimate~and~Latent~Score), 
-       x = "# of Blocks") +
-  scale_color_discrete(name = "# of Items in Total Set") +
-  theme_minimal() +
-  theme(legend.position = "top", text = element_text(size = 18)) +
-  geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), width = 0) +
-  geom_point(aes(shape = is_bibd), size = 3) +
-  scale_shape_manual(
-    name = "Is BIBD?", 
-    labels = c("False", "True"),
-    values = c(1, 19)
-  )
-
-emmeans(m1, ~ b + items) %>% 
-  as_tibble() %>% 
-  left_join(key) %>% 
   ggplot(aes(x = b, y = emmean, group = items)) +
   geom_line() +
   labs(y = expression(R^2~Between~ABW~Estimate~and~Latent~Score), 
        x = "# of Blocks",
-       caption = "Each panel represents number of total items in set\nand follows a different y-axis range for clarity") +
+       caption = "Each panel follows a different y-axis range for clarity") +
   theme_minimal() +
-  theme(legend.position = "top", text = element_text(size = 18)) +
-  geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), width = 0) +
-  geom_point(aes(shape = is_bibd), size = 3) +
+  theme(legend.position = "top", text = element_text(size = 16)) +
+  geom_point(aes(shape = is_bibd), size = 2) +
   scale_shape_manual(
     name = "Is BIBD?", 
     labels = c("False", "True"),
     values = c(1, 19)
   ) +
-  facet_wrap(~ items, scales = "free")
-
-# guidance for when you can't get all pairs
-dat %>% 
-  filter(pairs_avg < 1 & !is_bibd) %>% 
-  betareg(rsq ~ pairs_avg + items_var | pairs_avg + items_var, .) %>% 
-  summary()
-
-dat %>% 
-  filter(pairs_avg < 1 & !is_bibd) %>% 
-  ggplot(aes(x = pairs_avg, y = rsq)) +
-  geom_point(shape = 1, alpha = .2) +
-  geom_smooth(se = FALSE, method = "betareg", color = "black") +
-  theme_minimal()
-
-dat %>% 
-  filter(pairs_avg < 1 & !is_bibd) %>% 
-  ggplot(aes(x = items_var, y = rsq)) +
-  geom_point(shape = 1, alpha = .2) +
-  geom_smooth(se = FALSE, method = "betareg", color = "black") +
-  theme_minimal()
-
-# what about when you can put all pairs in
-dat %>% 
-  filter(pairs_avg == 1) %>% 
-  betareg(rsq ~ pairs_var | pairs_var, .) %>% 
-  summary()
-
-dat %>% 
-  filter(pairs_avg == 1) %>% 
-  ggplot(aes(x = pairs_var, y = rsq)) +
-  geom_point(shape = 1, alpha = .2) +
-  geom_smooth(se = FALSE, method = "betareg", color = "black") +
-  theme_minimal()
-
-dat %>% 
-  filter(pairs_avg == 1 & !is_bibd) %>% 
-  betareg(rsq ~ pairs_var | pairs_var, .) %>% 
-  summary()
-
-dat %>% 
-  filter(pairs_avg == 1 & !is_bibd) %>% 
-  ggplot(aes(x = pairs_var, y = rsq)) +
-  geom_point(shape = 1, alpha = .2) +
-  geom_smooth(se = FALSE, method = "betareg", color = "black") +
-  theme_minimal()
-
-# rank all ---------------------------------------------------------------------
-dat %>% 
-  mutate(b = factor(b), items = factor(items), is_bibd) %>% 
-  group_by(b, items, is_bibd) %>% 
-  summarise(retain_rank = mean(rank_all), .groups = "drop") %>% 
-  ggplot(aes(x = b, y = retain_rank, group = items, color = items)) +
-  geom_line() +
-  labs(y = "Proportion of Simulations With\nFull Rank Order Retained", 
-       x = "# of Blocks") +
-  scale_color_discrete(name = "# of Items in Total Set") +
-  theme_minimal() +
-  theme(legend.position = "top", text = element_text(size = 18)) +
-  geom_point(aes(shape = is_bibd), size = 3) +
-  scale_shape_manual(
-    name = "Is BIBD?", 
-    labels = c("False", "True"),
-    values = c(1, 19)
+  facet_wrap(
+    ~ items, 
+    scales = "free",
+    labeller = as_labeller(function(x) paste0("t = ", x))
   )
 
+# rank all ---------------------------------------------------------------------
 dat %>% 
   filter(items < 19) %>% 
   mutate(b = factor(b), items = factor(items), is_bibd) %>% 
@@ -213,99 +137,166 @@ dat %>%
   geom_line() +
   labs(y = "Proportion of Simulations With\nFull Rank Order Retained", 
        x = "# of Blocks",
-       caption = "Each panel represents number of total items in set\nand follows a different y-axis range for clarity\nPanels for 19 and 20 not shown because they are constant at zero") +
+       caption = "Each panel follows a different y-axis range for clarity\nPanels for 19 and 20 not shown because they are constant at zero") +
   scale_color_discrete(name = "# of Items in Total Set") +
   theme_minimal() +
-  theme(legend.position = "top", text = element_text(size = 18)) +
-  facet_wrap(~ items, scales = "free") +
+  theme(legend.position = "top", text = element_text(size = 16)) +
+  facet_wrap(
+    ~ items, 
+    scales = "free",
+    labeller = as_labeller(function(x) paste0("t = ", x))
+  ) +
   geom_point(aes(shape = is_bibd), size = 3) +
   scale_shape_manual(
     name = "Is BIBD?", 
     labels = c("False", "True"),
     values = c(1, 19)
   )
-
-dat %>% 
-  filter(items %in% {dat %>% filter(is_bibd) %>% pull(items) %>% unique()}) %>% 
-  mutate(b = factor(b), items = factor(items), is_bibd) %>% 
-  group_by(b, items, is_bibd) %>% 
-  summarise(retain_rank = mean(rank_all), .groups = "drop") %>% 
-  ggplot(aes(x = b, y = retain_rank, group = items, color = items)) +
-  geom_line() +
-  labs(y = "Proportion of Simulations With\nFull Rank Order Retained", 
-       x = "# of Blocks",
-       caption = "Only displaying total items where a BIBD is possible") +
-  scale_color_discrete(name = "# of Items in Total Set") +
-  theme_minimal() +
-  theme(legend.position = "top", text = element_text(size = 18)) +
-  geom_point(aes(shape = is_bibd), size = 3) +
-  scale_shape_manual(
-    name = "Is BIBD?", 
-    labels = c("False", "True"),
-    values = c(1, 19)
-  )
-
-dat %>% 
-  filter(!items %in% {dat %>% filter(is_bibd) %>% pull(items) %>% unique()}) %>% 
-  mutate(b = factor(b), items = factor(items), is_bibd) %>% 
-  group_by(b, items, is_bibd) %>% 
-  summarise(retain_rank = mean(rank_all), .groups = "drop") %>% 
-  ggplot(aes(x = b, y = retain_rank, group = items, color = items)) +
-  geom_line() +
-  labs(y = "Proportion of Simulations With\nFull Rank Order Retained", 
-       x = "# of Blocks",
-       caption = "Only displaying total items where a BIBD is not possible") +
-  scale_color_discrete(name = "# of Items in Total Set") +
-  theme_minimal() +
-  theme(legend.position = "top", text = element_text(size = 18)) +
-  geom_point(size = 3, shape = 1)
 
 # rank avg ---------------------------------------------------------------------
 dat %>% 
   mutate(b = factor(b), items = factor(items), is_bibd) %>% 
   group_by(b, items, is_bibd, lambda, reps) %>% 
   summarise(retain_rank = mean(rank_avg), .groups = "drop") %>% 
+  # filter(items != "20") %>% 
   ggplot(aes(x = b, y = retain_rank, group = items)) +
   geom_line() +
   labs(
-    y = "Average Proportion of Items with Rank Order Retained", 
-    x = "# of Blocks"
+    y = "Median Proportion of Items with Rank Order Retained",
+    x = "# of Blocks",
+    caption = "Each panel follows a different y-axis range for clarity"
   ) +
   scale_color_discrete(name = "# of Items in Total Set") +
   theme_minimal() +
-  theme(legend.position = "top", text = element_text(size = 18)) +
-  facet_wrap(~ items, scales = "free") +
-  geom_point(aes(shape = is_bibd), size = 3) +
+  theme(legend.position = "top", text = element_text(size = 16)) +
+  facet_wrap(
+    ~ items, 
+    scales = "free",
+    labeller = as_labeller(function(x) paste0("t = ", x))
+  ) +
+  geom_point(aes(shape = is_bibd), size = 2) +
+  scale_shape_manual(
+    name = "Is BIBD?",
+    labels = c("False", "True"),
+    values = c(1, 19)
+  )# +
+  # scale_y_continuous(expand = expansion(.5)) +
+  # geom_text(
+  #   aes(label = paste0("lambda==", round(lambda, 1))),
+  #   parse = TRUE,
+  #   vjust = 2
+  # ) +
+  # geom_text(
+  #   aes(label = paste0("italic(r)==", round(reps, 1))),
+  #   parse = TRUE,
+  #   vjust = 3.5
+  # )
+
+# top 3 bot 3 ------------------------------------------------------------------
+with(dat, table(rank_top3, rank_bot3))
+sum(diag(with(dat, prop.table(table(rank_top3, rank_bot3)))))
+# they only agree 59 percent of the time
+
+dat %>% 
+  mutate(b = factor(b), items = factor(items), is_bibd) %>% 
+  group_by(b, items, is_bibd) %>% 
+  summarise(retain_rank = mean(rank_top3), .groups = "drop") %>% 
+  ggplot(aes(x = b, y = retain_rank, group = items)) +
+  geom_line() +
+  labs(y = "Proportion of Simulations With\nBest 3 Rank Order Retained", 
+       x = "# of Blocks",
+       caption = "Each panel follows a different y-axis range for clarity") +
+  scale_color_discrete(name = "# of Items in Total Set") +
+  theme_minimal() +
+  theme(legend.position = "top", text = element_text(size = 16)) +
+  facet_wrap(
+    ~ items, 
+    scales = "free",
+    labeller = as_labeller(function(x) paste0("t = ", x))
+  ) +
+  geom_point(aes(shape = is_bibd), size = 2) +
   scale_shape_manual(
     name = "Is BIBD?", 
     labels = c("False", "True"),
     values = c(1, 19)
+  )
+
+dat %>% 
+  mutate(b = factor(b), items = factor(items), is_bibd) %>% 
+  group_by(b, items, is_bibd) %>% 
+  summarise(retain_rank = mean(rank_bot3), .groups = "drop") %>% 
+  ggplot(aes(x = b, y = retain_rank, group = items)) +
+  geom_line() +
+  labs(y = "Proportion of Simulations With\nWorst 3 Rank Order Retained", 
+       x = "# of Blocks",
+       caption = "Each panel follows a different y-axis range for clarity") +
+  scale_color_discrete(name = "# of Items in Total Set") +
+  theme_minimal() +
+  theme(legend.position = "top", text = element_text(size = 16)) +
+  facet_wrap(
+    ~ items, 
+    scales = "free",
+    labeller = as_labeller(function(x) paste0("t = ", x))
   ) +
-  geom_text(aes(label = round(lambda, 1)), vjust = 2) +
-  geom_text(aes(label = round(reps, 1)), vjust = 3)
+  geom_point(aes(shape = is_bibd), size = 2) +
+  scale_shape_manual(
+    name = "Is BIBD?", 
+    labels = c("False", "True"),
+    values = c(1, 19)
+  )
 
-# misc -------------------------------------------------------------------------
-# annotate the b by items points with lambda and reps
-ggplot(dat[!dat$is_bibd, ], aes(x = lambda, y = rank_avg)) +
-  geom_point() +
-  geom_smooth(se = FALSE)
+# lamba and reps ---------------------------------------------------------------
+# rsq
+m2 <- betareg(rsq ~ b + items + lambda_int + reps_int | 
+                b + items + lambda_int + reps_int, dat)
+summary(m2)
 
-ggplot(dat[!dat$is_bibd, ], aes(x = reps, y = rank_avg)) +
-  geom_point() +
-  geom_smooth(se = FALSE)
+emmeans(m2, ~ lambda_int, at = list(lambda_int = seq(.0, .5, .25)))
 
-ggplot(dat[!dat$is_bibd, ], aes(x = lambda, y = rsq)) +
-  geom_point() +
-  geom_smooth(se = FALSE, method = "betareg")
+# full rank
+m3 <- glm(rank_all ~ b + items + lambda_int + reps_int, binomial, dat)
+summary(m3)
 
-ggplot(dat[!dat$is_bibd, ], aes(x = reps, y = rsq)) +
-  geom_point() +
-  geom_smooth(se = FALSE, method = "betareg")
+emmeans(
+  m3,
+  ~ lambda_int,
+  at = list(lambda_int = seq(.0, .5, .25)),
+  type = "response"
+)
 
-ggplot(dat[!dat$is_bibd, ], aes(x = abs(round(lambda) - lambda), y = rsq)) +
-  geom_point() +
-  geom_smooth(se = FALSE, method = "betareg")
+# avg rank
+table(dat$rank_avg == 0)
+table(dat$rank_avg == 1)
 
-ggplot(dat[!dat$is_bibd, ], aes(x = abs(round(reps) - reps), y = rsq)) +
-  geom_point() +
-  geom_smooth(se = FALSE, method = "betareg")
+dat_ <- dat %>% 
+  filter(!rank_avg %in% 0:1)
+
+range(dat_$rank_avg)
+
+m4 <- betareg(rank_avg ~ b + items + lambda_int + reps_int | 
+                b + items + lambda_int + reps_int, dat_)
+summary(m4)
+
+emmeans(m4, ~ lambda_int, at = list(lambda_int = seq(.0, .5, .25)))
+
+# top 3
+m5 <- glm(rank_top3 ~ b + items + lambda_int + reps_int, binomial, dat)
+summary(m5)
+
+emmeans(
+  m5,
+  ~ lambda_int,
+  at = list(lambda_int = seq(.0, .5, .25)),
+  type = "response"
+)
+
+# bot 3
+m6 <- glm(rank_top3 ~ b + items + lambda_int + reps_int, binomial, dat)
+summary(m6)
+
+emmeans(
+  m6,
+  ~ lambda_int,
+  at = list(lambda_int = seq(.0, .5, .25)),
+  type = "response"
+)
