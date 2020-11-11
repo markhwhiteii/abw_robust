@@ -21,6 +21,9 @@ dat <- dat[!is.na(dat$rsq), ]
 hist(dat$rsq)
 mean(dat$rank_all)
 mean(dat$rank_avg)
+mean(dat$rank_avg == 1L)
+mean(dat$rank_avg == 0L)
+
 mean(dat$rank_top3)
 mean(dat$rank_bot3)
 table(dat$is_bibd)
@@ -79,8 +82,8 @@ ggplot(dat, aes(x = rsq, fill = is_bibd)) +
   theme_minimal() +
   theme(legend.position = "top", text = element_text(size = 18))
 
-chisq.test(xtabs(~ rank_all + is_bibd, dat))
-prop.table(xtabs(~ rank_all + is_bibd, dat), 2)
+glm(rank_all ~ is_bibd, binomial, dat) %>% 
+  emmeans(~ is_bibd, type = "response")
 
 ggplot(dat, aes(x = rank_avg, fill = is_bibd)) +
   geom_density(alpha = .7) +
@@ -90,11 +93,14 @@ ggplot(dat, aes(x = rank_avg, fill = is_bibd)) +
   theme_minimal() +
   theme(legend.position = "top", text = element_text(size = 18))
 
-chisq.test(xtabs(~ rank_top3 + is_bibd, dat))
-prop.table(xtabs(~ rank_top3 + is_bibd, dat), 2)
+betareg(rank_avg ~ is_bibd | is_bibd, dat[!dat$rank_avg %in% 0:1, ]) %>% 
+  emmeans(~ is_bibd, type = "response")
 
-chisq.test(xtabs(~ rank_bot3 + is_bibd, dat))
-prop.table(xtabs(~ rank_bot3 + is_bibd, dat), 2)
+glm(rank_top3 ~ is_bibd, binomial, dat) %>% 
+  emmeans(~ is_bibd, type = "response")
+
+glm(rank_bot3 ~ is_bibd, binomial, dat) %>% 
+  emmeans(~ is_bibd, type = "response")
 
 # rsq --------------------------------------------------------------------------
 m1 <- dat %>% 
