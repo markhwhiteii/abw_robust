@@ -12,7 +12,8 @@ res <- tibble(
   k = NA,
   pairs_avg = NA,
   pairs_var = NA,
-  items_var = NA
+  items_var = NA,
+  is_bibd = NA
 )
 
 # do the damn thing
@@ -25,6 +26,16 @@ for (i in seq_len(iter)) {
   b <- sample(10:16, 1)           # simulate number of blocks in design
   k <- sample(3:5, 1)             # simulate number of items per block
   Dx <- make_design(13, b, k)     # generate a design from these parameters
+  is_bibd <- Dx %>%               # see if its bibd
+    mutate_all(                   #   for details, see the while loop
+      ~sapply(., function(i) {    #   inside the find.BIB function
+        which(i == letters)
+      })) %>% 
+    as.matrix() %>%
+    isGYD(FALSE, FALSE) %>% 
+    getElement(1) %>% 
+    `[`(1:4) %>% 
+    all()
   Dx_pairs <- get_pairwise(Dx)    # get pairwise info on design
   Dx_items <- get_itemvar(Dx)     # get variance of number of times appeared
   r <- sim_abw(N, Dx, phi, noise) # generate result from these parameters
@@ -42,6 +53,7 @@ for (i in seq_len(iter)) {
   res$pairs_avg[i] <- Dx_pairs[1]
   res$pairs_var[i] <- Dx_pairs[2]
   res$items_var[i] <- Dx_items
+  res$is_bibd[i] <- is_bibd
   
   # progress
   if ((i %% 100) == 0L) cat(i, "\n")
