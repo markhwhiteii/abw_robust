@@ -4,7 +4,7 @@ library(quantreg)
 library(emmeans)
 library(tidyverse)
 
-dat <- read_csv("../Data/results4.csv")
+dat <- read_csv("../Data/results3.csv")
 
 # eda --------------------------------------------------------------------------
 # 8 failures of rsq
