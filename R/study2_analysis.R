@@ -3,7 +3,7 @@ library(betareg)
 library(emmeans)
 library(tidyverse)
 
-dat <- read_csv("../Data/results3.csv") %>% 
+dat <- read_csv("../Data/results2.csv") %>% 
   mutate(
     reps = (4 * b) / items,
     lambda = reps * (4 - 1) / (items - 1),
