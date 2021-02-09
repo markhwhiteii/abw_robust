@@ -13,21 +13,38 @@ dat <- read_csv("../Data/results1.csv") %>%
   ) %>% 
   select(-pairs_avg, -pairs_var, -items_var)
 
-# efa --------------------------------------------------------------------------
+# clean ------------------------------------------------------------------------
 # 11 failures of rsq
 table(is.na(dat$rsq))
 dat[is.na(dat$rsq), ]
 dat <- dat[!is.na(dat$rsq), ]
 
-hist(dat$rsq)
-mean(dat$rank)
-table(dat$rank)
-range(dat$rsq)
+# every time a bibd was available, did it find one?
+dat %>% 
+  select(b, k) %>% 
+  unique() %>% 
+  nrow()
+
+dat %>% 
+  select(b, k, is_bibd) %>% 
+  unique() %>% 
+  nrow()
+
+dat %>% 
+  count(b, k, is_bibd) %>% 
+  filter(b == 13 & k == 4)
+# yup!
 
 # treat b and k as factors -----------------------------------------------------
 m1 <- dat %>% 
   mutate(b = factor(b), k = factor(k)) %>% 
   betareg(rsq ~ b * k | b * k, .)
+
+m0 <- dat %>% 
+  mutate(b = factor(b), k = factor(k)) %>% 
+  betareg(rsq ~ b + k | b * k, .)
+
+lmtest::lrtest(m0, m1)
 
 emmeans(m1, ~ b + k) %>% 
   as_tibble() %>%
@@ -43,7 +60,7 @@ emmeans(m1, ~ b + k) %>%
        x = "# of Blocks") +
   theme_minimal() +
   theme(legend.position = "top", text = element_text(size = 18)) +
-  facet_wrap(~ k, labeller = as_labeller(function(x) paste0("r = ", x))) +
+  facet_wrap(~ k, labeller = as_labeller(function(x) paste0("k = ", x))) +
   scale_shape_manual(
     name = "Is BIBD?",
     labels = c("False", "True"),
@@ -73,7 +90,7 @@ dat %>%
   scale_color_discrete(name = "# of Items per Block") +
   theme_minimal() +
   theme(legend.position = "top", text = element_text(size = 18)) +
-  facet_wrap(~ k, labeller = as_labeller(function(x) paste0("r = ", x))) +
+  facet_wrap(~ k, labeller = as_labeller(function(x) paste0("k = ", x))) +
   scale_shape_manual(
     name = "Is BIBD?",
     labels = c("False", "True"),
