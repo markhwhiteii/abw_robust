@@ -42,6 +42,7 @@ dat %>%
 
 # no, there were two instances where one was possible but we didn't converge
 # what were these?
+nrow(dat)
 bad_designs <- dat %>% 
   count(b, items, is_bibd) %>% 
   group_by(b, items) %>% 
@@ -64,6 +65,8 @@ dat %>%
   select(b, items, is_bibd) %>% 
   unique() %>% 
   nrow()
+
+nrow(dat)
 
 # cor mat
 round(cor(dat), 2)

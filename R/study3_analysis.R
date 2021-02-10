@@ -15,6 +15,7 @@ dat <- dat[!is.na(dat$rsq), ]
 hist(dat$rsq)
 hist(dat$rank_avg)
 table(dat$rank_avg)
+mean(dat$rank_avg %in% 0:1)
 table(dat$d)
 
 # rsq --------------------------------------------------------------------------
@@ -70,3 +71,9 @@ plot_dat <- plot_dat %>%
 ggplot(plot_dat, aes(x = d, y = emmean)) +
   geom_line() +
   facet_wrap(~ outcome, labeller = label_parsed)
+
+# table ------------------------------------------------------------------------
+plot_dat %>% 
+  filter(d %in% c(1, 2, 5, 10, 20)) %>% 
+  select(d, emmean, outcome) %>% 
+  spread(outcome, emmean)
